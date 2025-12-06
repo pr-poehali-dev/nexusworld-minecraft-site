@@ -304,16 +304,39 @@ const Index = () => {
             </CardHeader>
             <CardContent>
               <div className="grid sm:grid-cols-3 gap-4">
-                {[
-                  { icon: 'MessageCircle', name: 'Discord' },
-                  { icon: 'Send', name: 'Telegram' },
-                  { icon: 'Youtube', name: 'YouTube' }
-                ].map((social, i) => (
-                  <Button key={i} variant="outline" className="h-16" size="lg">
-                    <Icon name={social.icon as any} className="mr-2" size={24} />
-                    {social.name}
-                  </Button>
-                ))}
+                <Button 
+                  variant="outline" 
+                  className="h-16 hover:bg-primary/5 hover:border-primary/50 transition-all" 
+                  size="lg"
+                  asChild
+                >
+                  <a href="https://t.me/NexusWorldTM" target="_blank" rel="noopener noreferrer">
+                    <Icon name="Send" className="mr-2" size={24} />
+                    Telegram
+                  </a>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="h-16 hover:bg-primary/5 hover:border-primary/50 transition-all" 
+                  size="lg"
+                  asChild
+                >
+                  <a href="https://www.youtube.com/@NexusWorldTM" target="_blank" rel="noopener noreferrer">
+                    <Icon name="Youtube" className="mr-2" size={24} />
+                    YouTube
+                  </a>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="h-16 hover:bg-primary/5 hover:border-primary/50 transition-all" 
+                  size="lg"
+                  asChild
+                >
+                  <a href="mailto:alek.efremov@icloud.com">
+                    <Icon name="Mail" className="mr-2" size={24} />
+                    Email
+                  </a>
+                </Button>
               </div>
             </CardContent>
           </Card>
