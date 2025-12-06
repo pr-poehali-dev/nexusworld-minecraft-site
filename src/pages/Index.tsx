@@ -54,10 +54,10 @@ const Index = () => {
   ];
 
   const team = [
-    { name: 'DarkMaster', role: 'Главный админ', avatar: '👑' },
-    { name: 'ShadowHunter', role: 'Технический админ', avatar: '⚙️' },
-    { name: 'LightGuardian', role: 'Модератор', avatar: '🛡️' },
-    { name: 'CrystalMage', role: 'Хелпер', avatar: '✨' }
+    { name: 'Александр Ефремов', role: 'Главный админ', avatar: '👑' },
+    { name: 'Сергей Арутюнян', role: 'Помощник админа', avatar: '⚙️' },
+    { name: 'Александр Штейнле', role: 'Модератор', avatar: '🛡️' },
+    { name: 'Тимофей Маркин', role: 'Хелпер', avatar: '✨' }
   ];
 
   return (
@@ -65,7 +65,7 @@ const Index = () => {
       <nav className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-md border-b border-primary/20">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <h1 className="text-2xl font-black text-gradient">NEXUSWORLD</h1>
-          <div className="hidden md:flex gap-6">
+          <div className="hidden md:flex gap-6 items-center">
             {['home', 'donate', 'rules', 'about', 'team', 'status', 'contacts'].map((section) => (
               <button
                 key={section}
@@ -82,6 +82,12 @@ const Index = () => {
                  section === 'status' ? 'Статус' : 'Контакты'}
               </button>
             ))}
+            <a href="/admin" className="ml-4">
+              <Button size="sm" variant="outline" className="border-primary/50 hover:bg-primary/10">
+                <Icon name="Shield" className="mr-2" size={16} />
+                Admin
+              </Button>
+            </a>
           </div>
         </div>
       </nav>
