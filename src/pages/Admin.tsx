@@ -1,19 +1,57 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
+import { themes, applyTheme } from '@/lib/themes';
+
+interface SiteSettings {
+  site_title: string;
+  site_description: string;
+  telegram_link: string;
+  youtube_link: string;
+  email: string;
+  server_ip: string;
+  theme: string;
+}
+
+interface DonationPackage {
+  id?: number;
+  name: string;
+  price: number;
+  description: string;
+  features: string[];
+  color_from: string;
+  color_to: string;
+  is_popular: boolean;
+  is_active: boolean;
+}
 
 const Admin = () => {
+  const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const { toast } = useToast();
+
+  const [siteSettings, setSiteSettings] = useState<SiteSettings>({
+    site_title: 'NEXUSWORLD',
+    site_description: 'Легендарный сервер с уникальными режимами игры',
+    telegram_link: 'https://t.me/NexusWorldTM',
+    youtube_link: 'https://www.youtube.com/@NexusWorldTM',
+    email: 'alek.efremov@icloud.com',
+    server_ip: 'NexusWorld.joinserver.ru',
+    theme: 'default'
+  });
+
+  const [packages, setPackages] = useState<DonationPackage[]>([]);
+  const [editingPackage, setEditingPackage] = useState<DonationPackage | null>(null);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,29 +73,34 @@ const Admin = () => {
   const handleLogout = () => {
     setIsAuthenticated(false);
     setPassword('');
+    navigate('/');
     toast({
       title: "Выход выполнен",
-      description: "Вы вышли из панели администратора",
     });
   };
 
-  const [serverStatus, setServerStatus] = useState({
-    online: true,
-    players: 248,
-    maxPlayers: 500,
-    tps: 19.8,
-    ram: 12.4,
-    maxRam: 16
-  });
-
-  const [maintenance, setMaintenance] = useState(false);
-
-  const sendAnnouncement = (e: React.FormEvent) => {
-    e.preventDefault();
+  const saveSiteSettings = () => {
     toast({
-      title: "Объявление отправлено",
-      description: "Сообщение доставлено всем игрокам",
+      title: "Настройки сохранены",
+      description: "Изменения будут применены после перезагрузки",
     });
+  };
+
+  const savePackage = () => {
+    if (editingPackage) {
+      const index = packages.findIndex(p => p.id === editingPackage.id);
+      if (index !== -1) {
+        const newPackages = [...packages];
+        newPackages[index] = editingPackage;
+        setPackages(newPackages);
+      } else {
+        setPackages([...packages, { ...editingPackage, id: Date.now() }]);
+      }
+      setEditingPackage(null);
+      toast({
+        title: "Пакет сохранён",
+      });
+    }
   };
 
   if (!isAuthenticated) {
@@ -88,6 +131,15 @@ const Admin = () => {
                 <Icon name="LogIn" className="mr-2" size={20} />
                 Войти
               </Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="w-full" 
+                onClick={() => navigate('/')}
+              >
+                <Icon name="Home" className="mr-2" size={20} />
+                На главную
+              </Button>
             </form>
           </CardContent>
         </Card>
@@ -101,245 +153,276 @@ const Admin = () => {
         <div className="flex items-center justify-between mb-8 pt-4">
           <div>
             <h1 className="text-4xl font-black text-gradient mb-2">ADMIN PANEL</h1>
-            <p className="text-foreground/70">Панель управления сервером NexusWorld</p>
+            <p className="text-foreground/70">Панель управления сайтом NexusWorld</p>
           </div>
-          <Button onClick={handleLogout} variant="outline" className="border-primary/50">
-            <Icon name="LogOut" className="mr-2" size={20} />
-            Выход
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => navigate('/')} variant="outline" className="border-primary/50">
+              <Icon name="Home" className="mr-2" size={20} />
+              На главную
+            </Button>
+            <Button onClick={handleLogout} variant="outline" className="border-primary/50">
+              <Icon name="LogOut" className="mr-2" size={20} />
+              Выход
+            </Button>
+          </div>
         </div>
 
-        <div className="grid md:grid-cols-4 gap-4 mb-8">
-          <Card className="bg-card/50 backdrop-blur-sm border-primary/30">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-foreground/60 uppercase tracking-wider mb-1">Статус</p>
-                  <Badge className={`${serverStatus.online ? 'bg-green-500/20 text-green-400 border-green-500/50' : 'bg-red-500/20 text-red-400 border-red-500/50'}`}>
-                    {serverStatus.online ? 'Онлайн' : 'Оффлайн'}
-                  </Badge>
-                </div>
-                <Icon name="Activity" className="text-primary" size={32} />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card/50 backdrop-blur-sm border-primary/30">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-foreground/60 uppercase tracking-wider mb-1">Игроки</p>
-                  <p className="text-2xl font-black text-gradient">{serverStatus.players}/{serverStatus.maxPlayers}</p>
-                </div>
-                <Icon name="Users" className="text-primary" size={32} />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card/50 backdrop-blur-sm border-primary/30">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-foreground/60 uppercase tracking-wider mb-1">TPS</p>
-                  <p className="text-2xl font-black text-green-400">{serverStatus.tps}</p>
-                </div>
-                <Icon name="Zap" className="text-primary" size={32} />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card/50 backdrop-blur-sm border-primary/30">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-foreground/60 uppercase tracking-wider mb-1">RAM</p>
-                  <p className="text-2xl font-black text-gradient">{serverStatus.ram}/{serverStatus.maxRam} GB</p>
-                </div>
-                <Icon name="HardDrive" className="text-primary" size={32} />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Tabs defaultValue="control" className="space-y-6">
+        <Tabs defaultValue="site" className="space-y-6">
           <TabsList className="bg-card/50 border border-primary/30">
-            <TabsTrigger value="control">
+            <TabsTrigger value="site">
               <Icon name="Settings" className="mr-2" size={16} />
-              Управление
+              Настройки сайта
             </TabsTrigger>
-            <TabsTrigger value="players">
-              <Icon name="Users" className="mr-2" size={16} />
-              Игроки
+            <TabsTrigger value="packages">
+              <Icon name="Gift" className="mr-2" size={16} />
+              Донат-пакеты
             </TabsTrigger>
-            <TabsTrigger value="messages">
-              <Icon name="MessageSquare" className="mr-2" size={16} />
-              Объявления
+            <TabsTrigger value="theme">
+              <Icon name="Palette" className="mr-2" size={16} />
+              Темы оформления
             </TabsTrigger>
-            <TabsTrigger value="logs">
-              <Icon name="FileText" className="mr-2" size={16} />
-              Логи
+            <TabsTrigger value="transactions">
+              <Icon name="CreditCard" className="mr-2" size={16} />
+              Транзакции
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="control" className="space-y-4">
+          <TabsContent value="site" className="space-y-4">
             <Card className="bg-card/50 backdrop-blur-sm border-primary/30">
               <CardHeader>
-                <CardTitle className="text-2xl">Управление сервером</CardTitle>
-                <CardDescription>Основные функции управления</CardDescription>
+                <CardTitle className="text-2xl">Основные настройки</CardTitle>
+                <CardDescription>Управление контентом главной страницы</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="flex items-center justify-between p-4 bg-background/50 rounded-lg">
-                  <div>
-                    <p className="font-semibold mb-1">Режим технических работ</p>
-                    <p className="text-sm text-foreground/60">Закрыть сервер для обычных игроков</p>
-                  </div>
-                  <Switch checked={maintenance} onCheckedChange={setMaintenance} />
-                </div>
-
                 <div className="grid md:grid-cols-2 gap-4">
-                  <Button className="h-20 bg-gradient-to-r from-green-600 to-emerald-600 hover:opacity-90">
-                    <Icon name="Power" className="mr-2" size={24} />
-                    Запустить сервер
-                  </Button>
-                  <Button variant="destructive" className="h-20">
-                    <Icon name="PowerOff" className="mr-2" size={24} />
-                    Остановить сервер
-                  </Button>
-                  <Button variant="outline" className="h-20 border-primary/50">
-                    <Icon name="RotateCw" className="mr-2" size={24} />
-                    Перезагрузить
-                  </Button>
-                  <Button variant="outline" className="h-20 border-primary/50">
-                    <Icon name="Save" className="mr-2" size={24} />
-                    Сохранить мир
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="players" className="space-y-4">
-            <Card className="bg-card/50 backdrop-blur-sm border-primary/30">
-              <CardHeader>
-                <CardTitle className="text-2xl">Управление игроками</CardTitle>
-                <CardDescription>248 игроков онлайн</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex gap-2">
-                    <Input placeholder="Поиск игрока..." className="bg-background/50" />
-                    <Button variant="outline" className="border-primary/50">
-                      <Icon name="Search" size={20} />
-                    </Button>
-                  </div>
-
-                  <div className="space-y-2 max-h-96 overflow-y-auto">
-                    {[
-                      { name: 'Player_1337', status: 'online', location: 'Выживание' },
-                      { name: 'ProGamer2024', status: 'online', location: 'BedWars' },
-                      { name: 'DiamondMiner', status: 'online', location: 'Креатив' },
-                      { name: 'RedstoneKing', status: 'online', location: 'Выживание' },
-                      { name: 'BuildMaster', status: 'online', location: 'SkyWars' }
-                    ].map((player, i) => (
-                      <div key={i} className="flex items-center justify-between p-4 bg-background/50 rounded-lg hover:bg-background/70 transition-colors">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center font-bold">
-                            {player.name[0]}
-                          </div>
-                          <div>
-                            <p className="font-semibold">{player.name}</p>
-                            <p className="text-sm text-foreground/60">{player.location}</p>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" className="border-primary/50">
-                            <Icon name="MessageCircle" size={16} />
-                          </Button>
-                          <Button size="sm" variant="outline" className="border-yellow-500/50 text-yellow-500">
-                            <Icon name="AlertTriangle" size={16} />
-                          </Button>
-                          <Button size="sm" variant="outline" className="border-red-500/50 text-red-500">
-                            <Icon name="Ban" size={16} />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="messages" className="space-y-4">
-            <Card className="bg-card/50 backdrop-blur-sm border-primary/30">
-              <CardHeader>
-                <CardTitle className="text-2xl">Отправить объявление</CardTitle>
-                <CardDescription>Сообщение для всех игроков на сервере</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={sendAnnouncement} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="announcement">Текст объявления</Label>
-                    <Textarea
-                      id="announcement"
-                      placeholder="Введите текст объявления..."
-                      className="bg-background/50 min-h-32"
+                    <Label>Название сайта</Label>
+                    <Input
+                      value={siteSettings.site_title}
+                      onChange={(e) => setSiteSettings({...siteSettings, site_title: e.target.value})}
+                      placeholder="NEXUSWORLD"
                     />
                   </div>
-                  <div className="flex gap-4">
-                    <Button type="submit" className="bg-gradient-to-r from-primary to-secondary hover:opacity-90">
-                      <Icon name="Send" className="mr-2" size={20} />
-                      Отправить всем
-                    </Button>
-                    <Button type="button" variant="outline" className="border-primary/50">
-                      <Icon name="Bell" className="mr-2" size={20} />
-                      Отправить с уведомлением
-                    </Button>
+                  <div className="space-y-2">
+                    <Label>IP сервера</Label>
+                    <Input
+                      value={siteSettings.server_ip}
+                      onChange={(e) => setSiteSettings({...siteSettings, server_ip: e.target.value})}
+                      placeholder="NexusWorld.joinserver.ru"
+                    />
                   </div>
-                </form>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Описание сайта</Label>
+                  <Textarea
+                    value={siteSettings.site_description}
+                    onChange={(e) => setSiteSettings({...siteSettings, site_description: e.target.value})}
+                    rows={3}
+                  />
+                </div>
+
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>Telegram</Label>
+                    <Input
+                      value={siteSettings.telegram_link}
+                      onChange={(e) => setSiteSettings({...siteSettings, telegram_link: e.target.value})}
+                      placeholder="https://t.me/..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>YouTube</Label>
+                    <Input
+                      value={siteSettings.youtube_link}
+                      onChange={(e) => setSiteSettings({...siteSettings, youtube_link: e.target.value})}
+                      placeholder="https://youtube.com/..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Email</Label>
+                    <Input
+                      value={siteSettings.email}
+                      onChange={(e) => setSiteSettings({...siteSettings, email: e.target.value})}
+                      placeholder="email@example.com"
+                    />
+                  </div>
+                </div>
+
+                <Button onClick={saveSiteSettings} className="w-full bg-gradient-to-r from-primary to-secondary">
+                  <Icon name="Save" className="mr-2" size={20} />
+                  Сохранить изменения
+                </Button>
               </CardContent>
             </Card>
+          </TabsContent>
 
+          <TabsContent value="packages" className="space-y-4">
             <Card className="bg-card/50 backdrop-blur-sm border-primary/30">
               <CardHeader>
-                <CardTitle className="text-xl">Шаблоны сообщений</CardTitle>
+                <CardTitle className="text-2xl">Управление донат-пакетами</CardTitle>
+                <CardDescription>Редактирование привилегий и цен</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="grid md:grid-cols-2 gap-3">
-                  {[
-                    { text: 'Перезагрузка через 5 минут', icon: 'RotateCw' },
-                    { text: 'Технические работы', icon: 'Wrench' },
-                    { text: 'Новый ивент запущен', icon: 'Sparkles' },
-                    { text: 'Обновление правил', icon: 'FileText' }
-                  ].map((template, i) => (
-                    <Button key={i} variant="outline" className="border-primary/30 justify-start">
-                      <Icon name={template.icon as any} className="mr-2" size={16} />
-                      {template.text}
-                    </Button>
-                  ))}
+              <CardContent className="space-y-4">
+                {editingPackage ? (
+                  <div className="space-y-4 p-4 border border-primary/30 rounded-lg bg-background/30">
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Название</Label>
+                        <Input
+                          value={editingPackage.name}
+                          onChange={(e) => setEditingPackage({...editingPackage, name: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Цена (₽)</Label>
+                        <Input
+                          type="number"
+                          value={editingPackage.price}
+                          onChange={(e) => setEditingPackage({...editingPackage, price: parseInt(e.target.value)})}
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Описание</Label>
+                      <Input
+                        value={editingPackage.description}
+                        onChange={(e) => setEditingPackage({...editingPackage, description: e.target.value})}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Возможности (по одной на строку)</Label>
+                      <Textarea
+                        value={editingPackage.features.join('\n')}
+                        onChange={(e) => setEditingPackage({...editingPackage, features: e.target.value.split('\n')})}
+                        rows={5}
+                      />
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Цвет градиента (от)</Label>
+                        <Input
+                          value={editingPackage.color_from}
+                          onChange={(e) => setEditingPackage({...editingPackage, color_from: e.target.value})}
+                          placeholder="blue-500"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Цвет градиента (до)</Label>
+                        <Input
+                          value={editingPackage.color_to}
+                          onChange={(e) => setEditingPackage({...editingPackage, color_to: e.target.value})}
+                          placeholder="cyan-600"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={editingPackage.is_popular}
+                          onCheckedChange={(checked) => setEditingPackage({...editingPackage, is_popular: checked})}
+                        />
+                        <Label>Популярный</Label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={editingPackage.is_active}
+                          onCheckedChange={(checked) => setEditingPackage({...editingPackage, is_active: checked})}
+                        />
+                        <Label>Активен</Label>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={savePackage} className="flex-1 bg-gradient-to-r from-primary to-secondary">
+                        <Icon name="Save" className="mr-2" size={20} />
+                        Сохранить
+                      </Button>
+                      <Button onClick={() => setEditingPackage(null)} variant="outline" className="flex-1">
+                        Отмена
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button 
+                    onClick={() => setEditingPackage({
+                      name: '',
+                      price: 0,
+                      description: '',
+                      features: [],
+                      color_from: 'blue-500',
+                      color_to: 'cyan-600',
+                      is_popular: false,
+                      is_active: true
+                    })}
+                    className="w-full"
+                  >
+                    <Icon name="Plus" className="mr-2" size={20} />
+                    Добавить новый пакет
+                  </Button>
+                )}
+
+                <div className="text-sm text-muted-foreground mt-4">
+                  <p className="font-semibold mb-2">Текущие донат-пакеты будут загружены из базы данных</p>
+                  <p>Используйте форму выше для добавления и редактирования</p>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="logs" className="space-y-4">
+          <TabsContent value="theme" className="space-y-4">
             <Card className="bg-card/50 backdrop-blur-sm border-primary/30">
               <CardHeader>
-                <CardTitle className="text-2xl">Логи сервера</CardTitle>
-                <CardDescription>Последние события</CardDescription>
+                <CardTitle className="text-2xl">Темы оформления</CardTitle>
+                <CardDescription>Выберите цветовую схему сайта</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid md:grid-cols-3 gap-4">
+                  {themes.map((theme) => (
+                    <Card 
+                      key={theme.value}
+                      className={`cursor-pointer transition-all hover:scale-105 ${
+                        siteSettings.theme === theme.value ? 'border-primary border-2' : 'border-border/40'
+                      }`}
+                      onClick={() => {
+                        setSiteSettings({...siteSettings, theme: theme.value});
+                        applyTheme(theme.value);
+                        toast({
+                          title: "Тема применена",
+                          description: `Выбрана тема: ${theme.name}`,
+                        });
+                      }}
+                    >
+                      <CardContent className="p-4">
+                        <div 
+                          className="h-20 rounded-lg mb-3" 
+                          style={{
+                            background: `linear-gradient(to right, hsl(${theme.colors.primary}), hsl(${theme.colors.secondary}))`
+                          }}
+                        ></div>
+                        <p className="font-semibold text-center">{theme.name}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+                <Button onClick={saveSiteSettings} className="w-full bg-gradient-to-r from-primary to-secondary">
+                  <Icon name="Save" className="mr-2" size={20} />
+                  Сохранить настройки
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="transactions" className="space-y-4">
+            <Card className="bg-card/50 backdrop-blur-sm border-primary/30">
+              <CardHeader>
+                <CardTitle className="text-2xl">История транзакций</CardTitle>
+                <CardDescription>Просмотр покупок донат-пакетов</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="bg-black/50 rounded-lg p-4 font-mono text-sm space-y-1 max-h-96 overflow-y-auto">
-                  <p className="text-green-400">[12:34:56] [INFO] Server started successfully</p>
-                  <p className="text-blue-400">[12:35:02] [INFO] Player_1337 joined the game</p>
-                  <p className="text-blue-400">[12:35:15] [INFO] ProGamer2024 joined the game</p>
-                  <p className="text-yellow-400">[12:35:30] [WARN] Can't keep up! Is the server overloaded?</p>
-                  <p className="text-blue-400">[12:36:01] [INFO] DiamondMiner joined the game</p>
-                  <p className="text-green-400">[12:36:15] [INFO] World saved successfully</p>
-                  <p className="text-red-400">[12:36:45] [ERROR] Connection lost: Player timed out</p>
-                  <p className="text-blue-400">[12:37:02] [INFO] RedstoneKing joined the game</p>
-                  <p className="text-green-400">[12:37:30] [INFO] Plugin loaded: NexusCore v2.1</p>
-                  <p className="text-blue-400">[12:38:11] [INFO] BuildMaster joined the game</p>
+                <div className="text-center py-8 text-muted-foreground">
+                  <Icon name="CreditCard" className="mx-auto mb-4" size={48} />
+                  <p>Транзакции будут отображаться здесь после настройки платёжной системы</p>
+                  <p className="text-sm mt-2">Карта для получения платежей: 2200 2402 0361 6491</p>
                 </div>
               </CardContent>
             </Card>

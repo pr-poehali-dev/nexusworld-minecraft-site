@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
+import { applyTheme, getStoredTheme } from '@/lib/themes';
+import { DonationModal } from '@/components/DonationModal';
 
 interface ServerStatus {
   online: boolean;
@@ -18,9 +20,11 @@ interface ServerStatus {
 const Index = () => {
   const [serverStatus, setServerStatus] = useState<ServerStatus>({ online: false });
   const [loading, setLoading] = useState(true);
+  const [selectedPackage, setSelectedPackage] = useState<{name: string; price: string; gradient: string} | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
+    applyTheme(getStoredTheme());
     fetchServerStatus();
     const interval = setInterval(fetchServerStatus, 30000);
     return () => clearInterval(interval);
@@ -224,9 +228,15 @@ const Index = () => {
             <div className="grid md:grid-cols-3 gap-6">
               {[
                 {
+                  name: 'НОВИЧОК',
+                  price: '99₽',
+                  features: ['Префикс [НОВИЧОК]', 'Цветной ник', '2 приватных региона', 'Доступ к /hat'],
+                  gradient: 'from-gray-500 to-slate-600'
+                },
+                {
                   name: 'VIP',
                   price: '199₽',
-                  features: ['Префикс [VIP]', 'Доступ к /fly', '5 регионов', 'Цветной ник'],
+                  features: ['Префикс [VIP]', 'Доступ к /fly', '5 регионов', 'Цветной ник', 'Набор ресурсов'],
                   gradient: 'from-green-500 to-emerald-600'
                 },
                 {
@@ -237,10 +247,22 @@ const Index = () => {
                   popular: true
                 },
                 {
+                  name: 'ELITE',
+                  price: '599₽',
+                  features: ['Префикс [ELITE]', 'Все команды VIP', '15 регионов', 'Уникальные эффекты', 'Приоритет 2'],
+                  gradient: 'from-purple-500 to-violet-600'
+                },
+                {
                   name: 'LEGEND',
                   price: '799₽',
-                  features: ['Префикс [LEGEND]', 'Все команды', 'Без ограничений', 'Эксклюзив', 'VIP очередь'],
-                  gradient: 'from-purple-500 to-pink-600'
+                  features: ['Префикс [LEGEND]', 'Все команды', '25 регионов', 'Эксклюзив', 'VIP очередь'],
+                  gradient: 'from-orange-500 to-amber-600'
+                },
+                {
+                  name: 'TITAN',
+                  price: '1299₽',
+                  features: ['Префикс [TITAN]', 'ВСЕ возможности', 'Без ограничений', 'Личный мир', 'Уникальные способности'],
+                  gradient: 'from-red-500 to-pink-600'
                 }
               ].map((pkg, i) => (
                 <Card key={i} className={`relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/40 hover:border-primary/50 transition-all ${pkg.popular ? 'scale-105' : ''}`}>
@@ -261,7 +283,10 @@ const Index = () => {
                         <span>{feature}</span>
                       </div>
                     ))}
-                    <Button className={`w-full mt-4 bg-gradient-to-r ${pkg.gradient} hover:opacity-90`}>
+                    <Button 
+                      onClick={() => setSelectedPackage(pkg)}
+                      className={`w-full mt-4 bg-gradient-to-r ${pkg.gradient} hover:opacity-90`}
+                    >
                       Купить
                     </Button>
                   </CardContent>
@@ -349,6 +374,14 @@ const Index = () => {
           <p className="mt-2">Мы не связаны с Mojang AB</p>
         </div>
       </footer>
+
+      {selectedPackage && (
+        <DonationModal
+          isOpen={!!selectedPackage}
+          onClose={() => setSelectedPackage(null)}
+          packageData={selectedPackage}
+        />
+      )}
     </div>
   );
 };
